@@ -3,9 +3,18 @@ import com.ecommerce.orders.Order;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.List;
+import java.util.ArrayList;
 
 public class Main {
     public static void main(String[] args) {
+        // Creating a preset list of products
+        List<Product> availableProducts = new ArrayList<>();
+        availableProducts.add(new Product(101, "Laptop", 899.99));
+        availableProducts.add(new Product(102, "Headphones", 199.99));
+        availableProducts.add(new Product(103, "Smartphone", 499.99));
+        availableProducts.add(new Product(104, "Tablet", 299.99));
+
         while (true) {
             int customerID = getIntInput("Enter Customer ID:");
             if (customerID == -1) System.exit(0);
@@ -18,38 +27,57 @@ public class Main {
             while (true) {
                 int choice = JOptionPane.showOptionDialog(null, "Choose an action:", "Shopping Cart",
                         JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null,
-                        new String[]{"Add Product", "Remove Product", "View Cart", "Place Order"}, "Add Product");
+                        new String[]{"Browse Products", "Remove Product", "View Cart", "Place Order"}, "Browse Products");
 
                 if (choice == JOptionPane.CLOSED_OPTION) {
                     System.exit(0);
                 }
 
-                if (choice == 0) {
-                    int productID = getIntInput("Enter Product ID:");
-                    if (productID == -1) continue;
+                if (choice == 0) { // Browse Products
+                    // Create a JComboBox to display products as a dropdown list
+                    JComboBox<String> productDropdown = new JComboBox<>();
+                    availableProducts.forEach(p -> productDropdown.addItem(p.getName()));
 
-                    if (customer.getCart().stream().anyMatch(p -> p.getProductID() == productID)) {
-                        JOptionPane.showMessageDialog(null, "Product with this ID already exists in the cart.");
+                    int option = JOptionPane.showConfirmDialog(null, productDropdown,
+                            "Select a Product", JOptionPane.OK_CANCEL_OPTION);
+
+                    if (option == JOptionPane.CANCEL_OPTION || productDropdown.getSelectedIndex() == -1) {
                         continue;
                     }
 
-                    String productName = getStringInput("Enter Product Name:");
-                    if (productName == null) continue;
+                    // Get the selected product
+                    Product selectedProduct = availableProducts.get(productDropdown.getSelectedIndex());
 
-                    double productPrice = getDoubleInput("Enter Product Price:");
-                    if (productPrice == -1) continue;
-
-                    customer.addToCart(new Product(productID, productName, productPrice));
-                } else if (choice == 1) {
+                    // Check if product is already in the cart
+                    if (customer.getCart().stream().anyMatch(p -> p.getProductID() == selectedProduct.getProductID())) {
+                        JOptionPane.showMessageDialog(null, "Product is already in the cart.");
+                    } else {
+                        customer.addToCart(selectedProduct);
+                    }
+                } else if (choice == 1) { // Remove Product from Cart
                     if (customer.getCart().isEmpty()) {
                         JOptionPane.showMessageDialog(null, "Cart is empty.");
                     } else {
-                        int productID = getIntInput("Enter Product ID to Remove:");
-                        customer.getCart().removeIf(p -> p.getProductID() == productID);
+                        // Create a JComboBox for removing products from the cart
+                        JComboBox<String> cartDropdown = new JComboBox<>();
+                        customer.getCart().forEach(p -> cartDropdown.addItem(p.getName()));
+
+                        int option = JOptionPane.showConfirmDialog(null, cartDropdown,
+                                "Select a Product to Remove", JOptionPane.OK_CANCEL_OPTION);
+
+                        if (option == JOptionPane.CANCEL_OPTION || cartDropdown.getSelectedIndex() == -1) {
+                            continue;
+                        }
+
+                        // Get the selected product to remove
+                        Product selectedProduct = customer.getCart().get(cartDropdown.getSelectedIndex());
+
+                        // Remove the selected product from the cart
+                        customer.removeFromCart(selectedProduct);
                     }
-                } else if (choice == 2) {
+                } else if (choice == 2) { // View Cart
                     showCartTable(customer);
-                } else if (choice == 3) {
+                } else if (choice == 3) { // Place Order
                     if (customer.getCart().isEmpty()) {
                         JOptionPane.showMessageDialog(null, "Cart is empty. Add products before placing an order.");
                     } else {
@@ -96,18 +124,6 @@ public class Main {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(null, "Invalid input. Please enter a valid integer.");
-            }
-        }
-    }
-
-    private static double getDoubleInput(String message) {
-        while (true) {
-            String input = JOptionPane.showInputDialog(message);
-            if (input == null) return -1;
-            try {
-                return Double.parseDouble(input);
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(null, "Invalid input. Please enter a valid number.");
             }
         }
     }
