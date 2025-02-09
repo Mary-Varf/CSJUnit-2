@@ -1,7 +1,7 @@
 package com.ecommerce.orders;
 
-import com.ecommerce.Customer;
 import com.ecommerce.Product;
+import com.ecommerce.Customer;
 import java.util.List;
 
 public class Order {

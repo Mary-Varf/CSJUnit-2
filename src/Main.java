@@ -5,6 +5,8 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Main {
     public static void main(String[] args) {
@@ -86,40 +88,53 @@ public class Main {
         }
     }
 
-    private static void showCartTable(Customer customer) {
+    // Helper function to create tables for cart and order summary
+    private static JTable createTable(List<Product> products, boolean includeTotal) {
         String[] columns = {"ID", "Product", "Price", "Quantity", "Sum"};
-        Object[][] data = customer.getCart().stream()
+
+        // Create the data for the table
+        Object[][] data = products.stream()
                 .map(p -> new Object[]{
                         p.getProductID(),
                         p.getName(),
                         p.getPrice(),
                         p.getQuantity(),
-                        p.getPrice() * p.getQuantity()  // Calculating the sum (price * quantity)
+                        new BigDecimal(p.getPrice() * p.getQuantity()).setScale(2, RoundingMode.HALF_UP).doubleValue() // Rounding the sum
                 })
                 .toArray(Object[][]::new);
 
+        // If includeTotal is true, add the total row
+        if (includeTotal) {
+            double total = products.stream()
+                    .mapToDouble(p -> p.getPrice() * p.getQuantity())
+                    .sum();
+
+            // Add the total sum row at the end
+            Object[][] newData = new Object[data.length + 1][];
+            System.arraycopy(data, 0, newData, 0, data.length);
+
+            // Total row
+            newData[data.length] = new Object[]{"", "Total", "", "", new BigDecimal(total).setScale(2, RoundingMode.HALF_UP).doubleValue()};
+            data = newData;
+        }
+
+        // Create the JTable using the data
         JTable table = new JTable(new DefaultTableModel(data, columns));
+        return table;
+    }
+
+    private static void showCartTable(Customer customer) {
+        JTable table = createTable(customer.getCart(), true); // 'true' to include the total sum
         JOptionPane.showMessageDialog(null, new JScrollPane(table), "Your Cart", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private static void showOrderSummary(Order order) {
         Customer customer = order.getCustomer();
-        String[] columns = {"ID", "Product", "Price", "Quantity", "Sum"};
-        Object[][] data = order.getProductList().stream()
-                .map(p -> new Object[]{
-                        p.getProductID(),
-                        p.getName(),
-                        p.getPrice(),
-                        p.getQuantity(),
-                        p.getPrice() * p.getQuantity()  // Calculating the sum (price * quantity)
-                })
-                .toArray(Object[][]::new);
-
-        JTable table = new JTable(new DefaultTableModel(data, columns));
+        JTable table = createTable(order.getProductList(), false); // 'false' because we don't need total in the order summary
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(new JLabel("Customer: " + customer.getName() + " (ID: " + customer.getCustomerID() + ")"), BorderLayout.NORTH);
-        panel.add(new JLabel("Total: $" + order.generateOrderSummary()), BorderLayout.SOUTH);
+        panel.add(new JLabel("Total: $" + new BigDecimal(order.generateOrderSummary()).setScale(2, RoundingMode.HALF_UP).doubleValue()), BorderLayout.SOUTH);
 
         JOptionPane.showMessageDialog(null, panel, "Order Summary", JOptionPane.INFORMATION_MESSAGE);
     }

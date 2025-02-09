@@ -3,6 +3,8 @@ package com.ecommerce;
 import com.ecommerce.orders.Order;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Customer {
     private int customerID;
@@ -32,14 +34,27 @@ public class Customer {
         cart.add(product);  // Add new product to the cart if it doesn't exist
     }
 
-    // Remove product from cart
+    // Remove one product from the cart
     public void removeFromCart(Product product) {
-        cart.remove(product);
+        for (Product p : cart) {
+            if (p.getProductID() == product.getProductID()) {
+                if (p.getQuantity() > 1) {
+                    p.setQuantity(p.getQuantity() - 1);  // Decrease the quantity by 1
+                } else {
+                    cart.remove(p);  // Remove product if quantity becomes 0
+                }
+                return;  // Exit after removing one instance of the product
+            }
+        }
     }
 
     // Calculate the total price of the products in the cart
     public double calculateTotal() {
-        return cart.stream().mapToDouble(p -> p.getPrice() * p.getQuantity()).sum();
+        double total = cart.stream().mapToDouble(p -> p.getPrice() * p.getQuantity()).sum();
+
+        // Round the total price to 2 decimal places
+        BigDecimal bd = new BigDecimal(total).setScale(2, RoundingMode.HALF_UP);
+        return bd.doubleValue();
     }
 
     public List<Product> getCart() { return cart; }
