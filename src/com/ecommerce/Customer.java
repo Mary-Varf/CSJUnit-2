@@ -21,26 +21,30 @@ public class Customer {
         this.cart = new ArrayList<>();
     }
 
+    // Add product to cart, or increment quantity if it already exists
     public void addToCart(Product product) {
         for (Product p : cart) {
             if (p.getProductID() == product.getProductID()) {
-                throw new IllegalArgumentException("Product with this ID already exists in the cart.");
+                p.incrementQuantity();  // Increment quantity if product exists in the cart
+                return;
             }
         }
-        cart.add(product);
+        cart.add(product);  // Add new product to the cart if it doesn't exist
     }
 
+    // Remove product from cart
     public void removeFromCart(Product product) {
         cart.remove(product);
     }
 
+    // Calculate the total price of the products in the cart
     public double calculateTotal() {
-        return cart.stream().mapToDouble(Product::getPrice).sum();
+        return cart.stream().mapToDouble(p -> p.getPrice() * p.getQuantity()).sum();
     }
 
     public List<Product> getCart() { return cart; }
-
     public String getName() { return name; }
+    public int getCustomerID() { return customerID; }
 
     public Order placeOrder(int orderID) {
         return new Order(orderID, this);
@@ -50,6 +54,4 @@ public class Customer {
     public String toString() {
         return "Customer ID: " + customerID + ", Name: " + name + ", Cart: " + cart;
     }
-
-    public int getCustomerID() { return customerID; }
 }

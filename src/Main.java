@@ -48,12 +48,8 @@ public class Main {
                     // Get the selected product
                     Product selectedProduct = availableProducts.get(productDropdown.getSelectedIndex());
 
-                    // Check if product is already in the cart
-                    if (customer.getCart().stream().anyMatch(p -> p.getProductID() == selectedProduct.getProductID())) {
-                        JOptionPane.showMessageDialog(null, "Product is already in the cart.");
-                    } else {
-                        customer.addToCart(selectedProduct);
-                    }
+                    // Add product to cart (or increment quantity if it already exists)
+                    customer.addToCart(selectedProduct);
                 } else if (choice == 1) { // Remove Product from Cart
                     if (customer.getCart().isEmpty()) {
                         JOptionPane.showMessageDialog(null, "Cart is empty.");
@@ -91,9 +87,15 @@ public class Main {
     }
 
     private static void showCartTable(Customer customer) {
-        String[] columns = {"ID", "Product", "Price"};
+        String[] columns = {"ID", "Product", "Price", "Quantity", "Sum"};
         Object[][] data = customer.getCart().stream()
-                .map(p -> new Object[]{p.getProductID(), p.getName(), p.getPrice()})
+                .map(p -> new Object[]{
+                        p.getProductID(),
+                        p.getName(),
+                        p.getPrice(),
+                        p.getQuantity(),
+                        p.getPrice() * p.getQuantity()  // Calculating the sum (price * quantity)
+                })
                 .toArray(Object[][]::new);
 
         JTable table = new JTable(new DefaultTableModel(data, columns));
@@ -102,9 +104,15 @@ public class Main {
 
     private static void showOrderSummary(Order order) {
         Customer customer = order.getCustomer();
-        String[] columns = {"ID", "Product", "Price"};
+        String[] columns = {"ID", "Product", "Price", "Quantity", "Sum"};
         Object[][] data = order.getProductList().stream()
-                .map(p -> new Object[]{p.getProductID(), p.getName(), p.getPrice()})
+                .map(p -> new Object[]{
+                        p.getProductID(),
+                        p.getName(),
+                        p.getPrice(),
+                        p.getQuantity(),
+                        p.getPrice() * p.getQuantity()  // Calculating the sum (price * quantity)
+                })
                 .toArray(Object[][]::new);
 
         JTable table = new JTable(new DefaultTableModel(data, columns));
